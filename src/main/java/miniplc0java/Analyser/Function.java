@@ -20,6 +20,7 @@ public class Function {
     public String getInstructionsString(){
         StringBuilder stringBuilder=new StringBuilder();
         for(int i=0;i<instructionsString.size();i++){
+            stringBuilder.append(i+":\t");
             stringBuilder.append(instructionsString.get(i)+"\n");
         }
         return stringBuilder.toString();

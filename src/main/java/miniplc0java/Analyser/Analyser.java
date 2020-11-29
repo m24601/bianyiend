@@ -126,7 +126,7 @@ public class Analyser {
             else if(function.variableType!=VariableType.VOID&&!returnCheck.returnPoints.get(0).ifReturn)
                 throw new Error("function ["+functionList.topFunction.name+"] need to return "+getPos());
             returnCheck.returnPoints.remove(0);
-            if(function.variableType==VariableType.VOID){
+            if(function.variableType==VariableType.VOID&&!function.instructionsString.get(function.instructionNum-1).equals("ret")){
                 functionList.addInstruction("ret",toByte(0x49,0,0));
             }
         }else
@@ -220,6 +220,7 @@ public class Analyser {
     private boolean while_stmt()throws IOException {
         if(t.ifNextToken(TokenType.WHILE_KW)){
             int returnPos=functionList.getInstructionNum();
+            int existedBreakPoint=breakPoints.size();
             expectNonTerminal("expr",expr(true));
             stack.pop(StackEnum.BOOL);
             int brStart=functionList.getInstructionNum();
@@ -227,17 +228,17 @@ public class Analyser {
             loopLevel++;
             expectNonTerminal("block_stmt",block_stmt());
             loopLevel--;
-            for(int i=0;i<breakPoints.size();i++){
+            for(int i=breakPoints.size()-1;breakPoints.size()!=existedBreakPoint;i--){
                 BreakPoint breakPoint=breakPoints.get(i);
                 if(breakPoint.isBreak){
                     int brNum=functionList.getInstructionNum()-breakPoint.instructionID;
                     functionList.replaceInstruction(breakPoint.instructionID,"br "+brNum,toByte(0x41,(Integer)brNum,4));
                 }else{
-                    int returnNum=returnPos-breakPoint.instructionID;
+                    int returnNum=returnPos-breakPoint.instructionID-1;
                     functionList.replaceInstruction(breakPoint.instructionID,"br "+returnNum,toByte(0x41,(Integer)returnNum,4));
                 }
+                breakPoints.remove(i);
             }
-            breakPoints.clear();
             int brNum=functionList.getInstructionNum()-brStart;
             replaceBrInstruction(brStart,brNum);
             int returnNum=returnPos-functionList.getInstructionNum()-1;
@@ -470,7 +471,7 @@ public class Analyser {
             String s=t.getThisToken().getValue().toString();
             functionList.addVariable(new Variable(null,true,VariableType.STRING,true,false,false,s));
             scope.addGlobalVariable(new Variable(null,true,VariableType.STRING,true,false,false,s));
-            long ID= (long) functionList.functions.get(0).params.size();
+            long ID= (long) functionList.functions.get(0).params.size()-1;
             functionList.addInstruction("push "+ID,toByte(0x01,(Long)ID,8));
             stack.push(StackEnum.INT);
         }else if(t.ifNextToken(TokenType.CHAR)){
