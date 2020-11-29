@@ -284,7 +284,6 @@ public class Analyser {
         return true;
     }
     private boolean expr(boolean isBool){
-        expectNonTerminal("assign_expr",assign_expr(isBool));
         t.savePoint();
         if(t.ifNextToken(TokenType.IDENT)&&t.ifNextToken(TokenType.ASSIGN)){
             t.loadPoint();
