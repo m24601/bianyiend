@@ -38,7 +38,7 @@ public class Tokenizer {
         return (point+1<tokens.size())?tokens.get(++point):null;
     }
     public boolean ifNextToken(TokenType tokenType){
-        if(peekToken().getTokenType()==tokenType){
+        if(peekToken()!=null&&peekToken().getTokenType()==tokenType){
             nextToken();
             return true;
         }

@@ -11,6 +11,7 @@ public class CharReader {
     public CharReader(File file) throws IOException {
         fileReader=new FileReader(file);
         nextChar=(char)fileReader.read();
+        System.out.print(nextChar);
     }
     public char peekChar(){
             return nextChar;
@@ -25,6 +26,7 @@ public class CharReader {
             pos.nextCol();
         thisChar=nextChar;
         nextChar=(char)fileReader.read();
+        System.out.print(nextChar);
         return thisChar;
     }
     public char expectChar(char a) throws IOException {
