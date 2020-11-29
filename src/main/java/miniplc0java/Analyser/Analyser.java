@@ -272,7 +272,7 @@ public class Analyser {
                 functionList.addInstruction("arga 0",toByte(0x0b,(Integer)0,4));
                 stack.push(StackEnum.ADDR);
                 expectNonTerminal("expr",expr(false));
-                functionList.addInstruction("store.64",toByte(0x17,(Integer)0,4));
+                functionList.addInstruction("store.64",toByte(0x17,(Integer)0,0));
                 if(functionList.topFunction.variableType==VariableType.INT)
                     stack.pop(StackEnum.INT);
                 else
