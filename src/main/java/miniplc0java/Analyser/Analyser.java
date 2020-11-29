@@ -53,9 +53,9 @@ public class Analyser {
         if(mainID==null)
             throw new Error("expect function main in this program");
         if(functionList.functions.get(mainID).variableType!=VariableType.VOID){
-            functionList.addInstruction("stackalloc "+1,toByte(0x1a,1,4));
+            functionList.addInstruction("stackalloc "+1,toByte(0x1a,(Integer)1,4));
         }
-        functionList.addInitialInstruction("call "+mainID,toByte(0x48,mainID,4));
+        functionList.addInitialInstruction("call "+mainID,toByte(0x48,(Integer) mainID,4));
         functionList.addVariable(new Variable("_start",true,VariableType.STRING,true,false,false,"_start"));
         functionList.functions.get(0).IDInGlobal=functionList.functions.get(0).params.size()-1;
     }
@@ -208,7 +208,7 @@ public class Analyser {
                     throw new Error("expect NonTerminal else "+getPos());
                 int skipNum=functionList.getInstructionNum()-skipStart-1;
 //                replaceBrInstruction(skipStart,skipNum);
-                functionList.replaceInstruction(skipStart,"br "+skipNum,toByte(0x41,skipNum,4));
+                functionList.replaceInstruction(skipStart,"br "+skipNum,toByte(0x41,(Integer)skipNum,4));
             }
             if(isFirst&&loopLevel==0)
                 returnCheck.getResult();
@@ -231,17 +231,17 @@ public class Analyser {
                 BreakPoint breakPoint=breakPoints.get(i);
                 if(breakPoint.isBreak){
                     int brNum=functionList.getInstructionNum()-breakPoint.instructionID;
-                    functionList.replaceInstruction(breakPoint.instructionID,"br "+brNum,toByte(0x41,brNum,4));
+                    functionList.replaceInstruction(breakPoint.instructionID,"br "+brNum,toByte(0x41,(Integer)brNum,4));
                 }else{
                     int returnNum=returnPos-breakPoint.instructionID;
-                    functionList.replaceInstruction(breakPoint.instructionID,"br "+returnNum,toByte(0x41,returnNum,4));
+                    functionList.replaceInstruction(breakPoint.instructionID,"br "+returnNum,toByte(0x41,(Integer)returnNum,4));
                 }
             }
             breakPoints.clear();
             int brNum=functionList.getInstructionNum()-brStart;
             replaceBrInstruction(brStart,brNum);
             int returnNum=returnPos-functionList.getInstructionNum()-1;
-            functionList.addInstruction("br "+returnNum,toByte(0x41,returnNum,4));
+            functionList.addInstruction("br "+returnNum,toByte(0x41,(Integer)returnNum,4));
             return true;
         }
         return false;
@@ -269,10 +269,10 @@ public class Analyser {
     private boolean return_stmt() {
         if(t.ifNextToken(TokenType.RETURN_KW)){
             if(functionList.topFunction.variableType!=VariableType.VOID){
-                functionList.addInstruction("arga 0",toByte(0x0b,0,4));
+                functionList.addInstruction("arga 0",toByte(0x0b,(Integer)0,4));
                 stack.push(StackEnum.ADDR);
                 expectNonTerminal("expr",expr(false));
-                functionList.addInstruction("store.64",toByte(0x17,0,4));
+                functionList.addInstruction("store.64",toByte(0x17,(Integer)0,4));
                 if(functionList.topFunction.variableType==VariableType.INT)
                     stack.pop(StackEnum.INT);
                 else
@@ -461,17 +461,17 @@ public class Analyser {
         }else if(ident_expr()){
 
         }else if(t.ifNextToken(TokenType.INT)){
-            functionList.addInstruction("push "+(long)t.getThisToken().getValue(),toByte(0x01,(long)t.getThisToken().getValue(),8));
+            functionList.addInstruction("push "+(long)t.getThisToken().getValue(),toByte(0x01,(Long) t.getThisToken().getValue(),8));
             stack.push(StackEnum.INT);
         }else if(t.ifNextToken(TokenType.DOUBLE)){
-            functionList.addInstruction("push "+(double)t.getThisToken().getValue(),toByte(0x01,(double)t.getThisToken().getValue(),8));
+            functionList.addInstruction("push "+(double)t.getThisToken().getValue(),toByte(0x01,(Double) t.getThisToken().getValue(),8));
             stack.push(StackEnum.DOUBLE);
         }else if(t.ifNextToken(TokenType.STRING)){
             String s=t.getThisToken().getValue().toString();
             functionList.addVariable(new Variable(null,true,VariableType.STRING,true,false,false,s));
             scope.addGlobalVariable(new Variable(null,true,VariableType.STRING,true,false,false,s));
-            int ID=functionList.functions.get(0).params.size();
-            functionList.addInstruction("push "+ID,toByte(0x01,ID,8));
+            long ID= (long) functionList.functions.get(0).params.size();
+            functionList.addInstruction("push "+ID,toByte(0x01,(Long)ID,8));
             stack.push(StackEnum.INT);
         }else if(t.ifNextToken(TokenType.CHAR)){
             functionList.addInstruction("push "+ (long)(char)t.getThisToken().getValue(),toByte(0x01, (long)(char)t.getThisToken().getValue(),8));
@@ -513,14 +513,14 @@ public class Analyser {
             int expectedParamNum=0,actualParamNum=0;
             if(function==null){
                 if(name.equals(stdio[0])||name.equals(stdio[1])||name.equals(stdio[2]))
-                    functionList.addInstruction("stackalloc "+1,toByte(0x1a,1,4));
+                    functionList.addInstruction("stackalloc "+1,toByte(0x1a,(Integer)1,4));
             }else{
                 expectedParamNum=function.paramSlot;
                 if(function.variableType==VariableType.INT){
-                    functionList.addInstruction("stackalloc "+1,toByte(0x1a,1,4));
+                    functionList.addInstruction("stackalloc "+1,toByte(0x1a,(Integer)1,4));
                     stack.push(StackEnum.INT);
                 }else if(function.variableType==VariableType.DOUBLE){
-                    functionList.addInstruction("stackalloc "+1,toByte(0x1a,1,4));
+                    functionList.addInstruction("stackalloc "+1,toByte(0x1a,(Integer)1,4));
                     stack.push(StackEnum.DOUBLE);
                 }
             }
@@ -549,7 +549,7 @@ public class Analyser {
                     }else
                         throw new Error("type of param ["+function.params.get(i).name+"] of function ["+function.name+"] is not correct "+getPos());
                 }
-                functionList.addInstruction("call "+functionID,toByte(0x48,functionID,4));
+                functionList.addInstruction("call "+functionID,toByte(0x48,(Integer) functionID,4));
             }
         }else{
             t.loadPoint();
@@ -563,7 +563,7 @@ public class Analyser {
             Variable variable=pushVariableAddress(name);
 //                if(!variable.isInitialized)
 //                    throw new Error("variable ["+variable.name+"] hasn't been initialized at: row"+Analyser.t.getThisToken().getStartPos().getRow()+" col"+Analyser.t.getThisToken().getStartPos().getCol());
-            functionList.addInstruction("load.64",toByte(0x13,0,0));
+            functionList.addInstruction("load.64",toByte(0x13,(Integer)0,0));
             stack.pop(StackEnum.ADDR);
             stack.push(variable.variableType);
         }else
@@ -630,19 +630,27 @@ public class Analyser {
         }
         return bytes;
     }
+    private byte[] toByte(int instruction,int num, int length){
+        byte[]bytes=new byte[length+1];
+        bytes[0]=(byte)instruction;
+        for(int i=length-1;i>=0;i--){
+            bytes[length-i]=(byte)(num>>(i*8));
+        }
+        return bytes;
+    }
     private byte[] toByte(int instruction,double num, int length){
         return toByte(instruction,Double.doubleToLongBits(num),length);
     }
     private Variable pushVariableAddress(String name){
         Variable variable=scope.getVariable(name);
         if(variable.isGlobal) {
-            functionList.addInstruction("global "+variable.offset, toByte(0x0c, variable.offset, 4));
+            functionList.addInstruction("global "+variable.offset, toByte(0x0c, (Integer)variable.offset, 4));
             stack.push(StackEnum.ADDR);
         }else if(variable.isParam){
-            functionList.addInstruction("arga "+variable.offset, toByte(0x0b, variable.offset, 4));
+            functionList.addInstruction("arga "+variable.offset, toByte(0x0b, (Integer)variable.offset, 4));
             stack.push(StackEnum.ADDR);
         }else if(variable.isLocal){
-            functionList.addInstruction("local "+variable.offset, toByte(0x0a, variable.offset, 4));
+            functionList.addInstruction("local "+variable.offset, toByte(0x0a, (Integer)variable.offset, 4));
             stack.push(StackEnum.ADDR);
         }
         return variable;
@@ -677,9 +685,9 @@ public class Analyser {
         boolean b=br.get(br.size()-1);
         br.remove(br.size()-1);
         if(b)
-            functionList.replaceInstruction(start,"notZero "+num,toByte(0x43,num,4));
+            functionList.replaceInstruction(start,"notZero "+num,toByte(0x43,(Integer)num,4));
         else
-            functionList.replaceInstruction(start,"isZero "+num,toByte(0x42,num,4));
+            functionList.replaceInstruction(start,"isZero "+num,toByte(0x42,(Integer)num,4));
     }
     public void addStdioFunctionInstruction(String name){
         if(name.equals(stdio[0])){
