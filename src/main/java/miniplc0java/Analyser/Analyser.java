@@ -89,7 +89,7 @@ public class Analyser {
             String name=t.expectToken(TokenType.IDENT).getValue().toString();
             Function function=new Function(name);
             functionList.add(function);
-//            functionList.addVariable(new Variable(name,true,VariableType.STRING,true,false,false,name));
+            functionList.addVariable(new Variable(name,true,VariableType.STRING,true,false,false,name));
 //            scope.addVariable(new Variable(name,true,true,VariableType.FUNCTION,name));
             scope.addScope();
             t.expectToken(TokenType.L_PAREN);
