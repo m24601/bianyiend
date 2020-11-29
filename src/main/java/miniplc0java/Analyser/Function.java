@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 public class Function {
     public String name;
+    public int IDInGlobal=-1;
     public int returnSlot=0;
     public int paramSlot=0;
     public int locSlot=0;

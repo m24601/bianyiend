@@ -56,6 +56,8 @@ public class Analyser {
             functionList.addInstruction("stackalloc "+1,toByte(0x1a,1,4));
         }
         functionList.addInitialInstruction("call "+mainID,toByte(0x48,mainID,4));
+        functionList.addVariable(new Variable("_start",true,VariableType.STRING,true,false,false,"_start"));
+        functionList.functions.get(0).IDInGlobal=functionList.functions.get(0).params.size()-1;
     }
     private boolean decl_stmt() {
         boolean isConst;
@@ -90,6 +92,7 @@ public class Analyser {
             Function function=new Function(name);
             functionList.add(function);
             functionList.addVariable(new Variable(name,true,VariableType.STRING,true,false,false,name));
+            function.IDInGlobal=functionList.functions.get(0).params.size()-1;
 //            scope.addVariable(new Variable(name,true,true,VariableType.FUNCTION,name));
             scope.addScope();
             t.expectToken(TokenType.L_PAREN);
@@ -600,12 +603,12 @@ public class Analyser {
         System.out.println("\nFunctionNum: "+functionList.functions.size()+"\n");
         for(int i=0;i<functionList.functions.size();i++){
             Function function=functionList.functions.get(i);
-            output.writeInt(0);
+            output.writeInt(function.IDInGlobal);
             output.writeInt(function.returnSlot);
             output.writeInt(function.paramSlot);
             output.writeInt(function.locSlot);
             output.writeInt(function.instructionNum);
-            System.out.println("FunctionID: "+0);
+            System.out.println("FunctionID: "+function.IDInGlobal);
             System.out.println("FunctionReturnSlot: "+function.returnSlot);
             System.out.println("FunctionParamSlot: "+function.paramSlot);
             System.out.println("FunctionLocSlot: "+function.locSlot);
