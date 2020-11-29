@@ -89,7 +89,7 @@ public class Analyser {
             String name=t.expectToken(TokenType.IDENT).getValue().toString();
             Function function=new Function(name);
             functionList.add(function);
-            functionList.addVariable(new Variable(name,true,VariableType.STRING,true,false,false,name));
+//            functionList.addVariable(new Variable(name,true,VariableType.STRING,true,false,false,name));
 //            scope.addVariable(new Variable(name,true,true,VariableType.FUNCTION,name));
             scope.addScope();
             t.expectToken(TokenType.L_PAREN);
@@ -600,12 +600,12 @@ public class Analyser {
         System.out.println("\nFunctionNum: "+functionList.functions.size()+"\n");
         for(int i=0;i<functionList.functions.size();i++){
             Function function=functionList.functions.get(i);
-            output.writeInt(i+1);
+            output.writeInt(0);
             output.writeInt(function.returnSlot);
             output.writeInt(function.paramSlot);
             output.writeInt(function.locSlot);
             output.writeInt(function.instructionNum);
-            System.out.println("FunctionID: "+i);
+            System.out.println("FunctionID: "+0);
             System.out.println("FunctionReturnSlot: "+function.returnSlot);
             System.out.println("FunctionParamSlot: "+function.paramSlot);
             System.out.println("FunctionLocSlot: "+function.locSlot);
