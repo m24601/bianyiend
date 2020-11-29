@@ -272,7 +272,7 @@ public class Analyser {
                 functionList.addInstruction("arga 0",toByte(0x0b,(Integer)0,4));
                 stack.push(StackEnum.ADDR);
                 expectNonTerminal("expr",expr(false));
-                functionList.addInstruction("store.64",toByte(0x17,(Integer)0,0));
+                functionList.addInstruction("store.64",toByte(0x17,0,0));
                 if(functionList.topFunction.variableType==VariableType.INT)
                     stack.pop(StackEnum.INT);
                 else
@@ -512,8 +512,8 @@ public class Analyser {
                 function=null;
             int expectedParamNum=0,actualParamNum=0;
             if(function==null){
-                if(name.equals(stdio[0])||name.equals(stdio[1])||name.equals(stdio[2]))
-                    functionList.addInstruction("stackalloc "+1,toByte(0x1a,(Integer)1,4));
+//                if(name.equals(stdio[0])||name.equals(stdio[1])||name.equals(stdio[2]))
+//                    functionList.addInstruction("stackalloc "+1,toByte(0x1a,(Integer)1,4));
             }else{
                 expectedParamNum=function.paramSlot;
                 if(function.variableType==VariableType.INT){
