@@ -53,9 +53,9 @@ public class Analyser {
         if(mainID==null)
             throw new Error("expect function main in this program");
         if(functionList.functions.get(mainID).variableType!=VariableType.VOID){
-            functionList.addInstruction("stackalloc "+1,toByte(0x1a,(Integer)1,4));
+            functionList.addInstruction("stackalloc "+1,toByteInt(0x1a,1));
         }
-        functionList.addInitialInstruction("call "+mainID,toByte(0x48,(Integer) mainID,4));
+        functionList.addInitialInstruction("call "+mainID,toByteInt(0x48,mainID));
         functionList.addVariable(new Variable("_start",true,VariableType.STRING,true,false,false,"_start"));
         functionList.functions.get(0).IDInGlobal=functionList.functions.get(0).params.size()-1;
     }
@@ -76,7 +76,10 @@ public class Analyser {
             pushVariableAddress(name);
             expectNonTerminal("expr",expr(false));
 //            variable.isInitialized=true;
-            functionList.addInstruction("store.64", toByte(0x17, 0, 0));
+            if(!variable.isGlobal)
+                functionList.addInstruction("store.64",(byte)0x17);
+            else
+                functionList.addInstruction("store.32",(byte)0x16);
             stack.pop(variableType);
             stack.pop(StackEnum.ADDR);
         }else if(isConst){
@@ -126,8 +129,8 @@ public class Analyser {
             else if(function.variableType!=VariableType.VOID&&!returnCheck.returnPoints.get(0).ifReturn)
                 throw new Error("function ["+functionList.topFunction.name+"] need to return "+getPos());
             returnCheck.returnPoints.remove(0);
-            if(function.variableType==VariableType.VOID&&!function.instructionsString.get(function.instructionNum-1).equals("ret")){
-                functionList.addInstruction("ret",toByte(0x49,0,0));
+            if(function.variableType==VariableType.VOID&&(function.instructionNum==0||!function.instructionsString.get(function.instructionNum-1).equals("ret"))){
+                functionList.addInstruction("ret",(byte)0x49);
             }
         }else
             return false;
@@ -208,7 +211,7 @@ public class Analyser {
                     throw new Error("expect NonTerminal else "+getPos());
                 int skipNum=functionList.getInstructionNum()-skipStart-1;
 //                replaceBrInstruction(skipStart,skipNum);
-                functionList.replaceInstruction(skipStart,"br "+skipNum,toByte(0x41,(Integer)skipNum,4));
+                functionList.replaceInstruction(skipStart,"br "+skipNum,toByteInt(0x41,skipNum));
             }
             if(isFirst&&loopLevel==0)
                 returnCheck.getResult();
@@ -232,17 +235,17 @@ public class Analyser {
                 BreakPoint breakPoint=breakPoints.get(i);
                 if(breakPoint.isBreak){
                     int brNum=functionList.getInstructionNum()-breakPoint.instructionID;
-                    functionList.replaceInstruction(breakPoint.instructionID,"br "+brNum,toByte(0x41,(Integer)brNum,4));
+                    functionList.replaceInstruction(breakPoint.instructionID,"br "+brNum,toByteInt(0x41,brNum));
                 }else{
                     int returnNum=returnPos-breakPoint.instructionID-1;
-                    functionList.replaceInstruction(breakPoint.instructionID,"br "+returnNum,toByte(0x41,(Integer)returnNum,4));
+                    functionList.replaceInstruction(breakPoint.instructionID,"br "+returnNum,toByteInt(0x41,returnNum));
                 }
                 breakPoints.remove(i);
             }
             int brNum=functionList.getInstructionNum()-brStart;
             replaceBrInstruction(brStart,brNum);
             int returnNum=returnPos-functionList.getInstructionNum()-1;
-            functionList.addInstruction("br "+returnNum,toByte(0x41,(Integer)returnNum,4));
+            functionList.addInstruction("br "+returnNum,toByteInt(0x41,returnNum));
             return true;
         }
         return false;
@@ -270,10 +273,10 @@ public class Analyser {
     private boolean return_stmt() {
         if(t.ifNextToken(TokenType.RETURN_KW)){
             if(functionList.topFunction.variableType!=VariableType.VOID){
-                functionList.addInstruction("arga 0",toByte(0x0b,(Integer)0,4));
+                functionList.addInstruction("arga 0",toByteInt(0x0b,0));
                 stack.push(StackEnum.ADDR);
                 expectNonTerminal("expr",expr(false));
-                functionList.addInstruction("store.64",toByte(0x17,0,0));
+                functionList.addInstruction("store.64",(byte)0x17);
                 if(functionList.topFunction.variableType==VariableType.INT)
                     stack.pop(StackEnum.INT);
                 else
@@ -283,7 +286,7 @@ public class Analyser {
             t.expectToken(TokenType.SEMICOLON);
             if(loopLevel==0)
                 returnCheck.top().ifReturn=true;
-            functionList.addInstruction("ret",toByte(0x49,0,0));
+            functionList.addInstruction("ret",(byte)0x49);
         }else
             return false;
         return true;
@@ -302,7 +305,10 @@ public class Analyser {
 //            isAssigned=true;
             expectNonTerminal("assign_expr",assign_expr(isBool));
 //            isAssigned=false;
-            functionList.addInstruction("store.64", toByte(0x17, 0, 0));
+            if(!variable.isGlobal)
+                functionList.addInstruction("store.64", (byte)0x17);
+            else
+                functionList.addInstruction("store.32", (byte)0x16);
             stack.pop(variable.variableType);
         }else{
             t.loadPoint();
@@ -347,16 +353,16 @@ public class Analyser {
                 }
                 compare();
                 if(s.equals("GE")){
-                    functionList.addInstruction("set.lt",toByte(0x39,0,0));
+                    functionList.addInstruction("set.lt",(byte)0x39);
                     br.add(true);
                 }else if(s.equals("LE")){
-                    functionList.addInstruction("set.gt",toByte(0x3a,0,0));
+                    functionList.addInstruction("set.gt",(byte)0x3a);
                     br.add(true);
                 }else if(s.equals("GT")){
-                    functionList.addInstruction("set.gt",toByte(0x3a,0,0));
+                    functionList.addInstruction("set.gt",(byte)0x3a);
                     br.add(false);
                 }else if(s.equals("LT")){
-                    functionList.addInstruction("set.lt",toByte(0x39,0,0));
+                    functionList.addInstruction("set.lt",(byte)0x39);
                     br.add(false);
                 }else if(s.equals("EQ")){
                     br.add(true);
@@ -374,20 +380,20 @@ public class Analyser {
                 if(t.ifNextToken(TokenType.PlUS)){
                     expectNonTerminal("plus_minus_expr",plus_minus_expr());
                     if(stack.top()==stack.preTop()&&stack.preTop()==StackEnum.INT){
-                        functionList.addInstruction("add.i",toByte(0x20,0,0));
+                        functionList.addInstruction("add.i",(byte)0x20);
                         stack.pop(StackEnum.INT);
                     }else if(stack.top()==stack.preTop()&&stack.preTop()==StackEnum.DOUBLE) {
-                        functionList.addInstruction("add.f", toByte(0x24, 0, 0));
+                        functionList.addInstruction("add.f", (byte)0x24);
                         stack.pop(StackEnum.DOUBLE);
                     }else
                         throw new Error(stack.top().toString()+" and "+stack.preTop().toString()+" cannot calculate "+getPos());
                 }else if(t.ifNextToken(TokenType.MINUS)){
                     expectNonTerminal("plus_minus_expr",plus_minus_expr());
                     if(stack.top()==stack.preTop()&&stack.preTop()==StackEnum.INT){
-                        functionList.addInstruction("sub.i",toByte(0x21,0,0));
+                        functionList.addInstruction("sub.i",(byte)0x21);
                         stack.pop(StackEnum.INT);
                     }else if(stack.top()==stack.preTop()&&stack.preTop()==StackEnum.DOUBLE){
-                        functionList.addInstruction("sub.f",toByte(0x25,0,0));
+                        functionList.addInstruction("sub.f",(byte)0x25);
                         stack.pop(StackEnum.DOUBLE);
                     }else
                         throw new Error(stack.top().toString()+" and "+stack.preTop().toString()+" cannot calculate "+getPos());
@@ -404,20 +410,20 @@ public class Analyser {
                 if(t.ifNextToken(TokenType.MUL)){
                     expectNonTerminal("mul_div_expr",mul_div_expr());
                     if(stack.top()==stack.preTop()&&stack.preTop()==StackEnum.INT){
-                        functionList.addInstruction("mul.i",toByte(0x22,0,0));
+                        functionList.addInstruction("mul.i",(byte)0x22);
                         stack.pop(StackEnum.INT);
                     }else if(stack.top()==stack.preTop()&&stack.preTop()==StackEnum.DOUBLE){
-                        functionList.addInstruction("mul.f",toByte(0x26,0,0));
+                        functionList.addInstruction("mul.f",(byte)0x26);
                         stack.pop(StackEnum.DOUBLE);
                     }else
                         throw new Error(stack.top().toString()+" and "+stack.preTop().toString()+" cannot calculate "+getPos());
                 }else if(t.ifNextToken(TokenType.DIV)){
                     expectNonTerminal("mul_div_expr",mul_div_expr());
                     if(stack.top()==stack.preTop()&&stack.preTop()==StackEnum.INT){
-                        functionList.addInstruction("div.i",toByte(0x23,0,0));
+                        functionList.addInstruction("div.i",(byte)0x23);
                         stack.pop(StackEnum.INT);
                     }else if(stack.top()==stack.preTop()&&stack.preTop()==StackEnum.DOUBLE){
-                        functionList.addInstruction("div.f",toByte(0x27,0,0));
+                        functionList.addInstruction("div.f",(byte)0x27);
                         stack.pop(StackEnum.DOUBLE);
                     }else
                         throw new Error(stack.top().toString()+" and "+stack.preTop().toString()+" cannot calculate "+getPos());
@@ -440,11 +446,11 @@ public class Analyser {
             }
             if(stack.top().toString().equals(name)){
             }else if(stack.top().toString().equals("int")&&name.equals("double")){
-                functionList.addInstruction("int to float",toByte(0x36,0,0));
+                functionList.addInstruction("int to float",(byte)0x36);
                 stack.pop(StackEnum.INT);
                 stack.push(StackEnum.DOUBLE);
             }else if(stack.top().toString().equals("double")&&name.equals("int")){
-                functionList.addInstruction("float to int",toByte(0x37,0,0));
+                functionList.addInstruction("float to int",(byte)0x37);
                 stack.pop(StackEnum.DOUBLE);
                 stack.push(StackEnum.INT);
             }
@@ -462,28 +468,28 @@ public class Analyser {
         }else if(ident_expr()){
 
         }else if(t.ifNextToken(TokenType.INT)){
-            functionList.addInstruction("push "+(long)t.getThisToken().getValue(),toByte(0x01,(Long) t.getThisToken().getValue(),8));
+            functionList.addInstruction("push "+(long)t.getThisToken().getValue(),toByteLong(0x01, (Long) t.getThisToken().getValue()));
             stack.push(StackEnum.INT);
         }else if(t.ifNextToken(TokenType.DOUBLE)){
-            functionList.addInstruction("push "+(double)t.getThisToken().getValue(),toByte(0x01,(Double) t.getThisToken().getValue(),8));
+            functionList.addInstruction("push "+(double)t.getThisToken().getValue(),toByteDouble(0x01,(Double) t.getThisToken().getValue()));
             stack.push(StackEnum.DOUBLE);
         }else if(t.ifNextToken(TokenType.STRING)){
             String s=t.getThisToken().getValue().toString();
             functionList.addVariable(new Variable(null,true,VariableType.STRING,true,false,false,s));
             scope.addGlobalVariable(new Variable(null,true,VariableType.STRING,true,false,false,s));
             long ID= (long) functionList.functions.get(0).params.size()-1;
-            functionList.addInstruction("push "+ID,toByte(0x01,(Long)ID,8));
+            functionList.addInstruction("push "+ID,toByteLong(0x01,(Long)ID));
             stack.push(StackEnum.INT);
         }else if(t.ifNextToken(TokenType.CHAR)){
-            functionList.addInstruction("push "+ (long)(char)t.getThisToken().getValue(),toByte(0x01, (long)(char)t.getThisToken().getValue(),8));
+            functionList.addInstruction("push "+ (long)(char)t.getThisToken().getValue(),toByteLong(0x01, (long)(char)t.getThisToken().getValue()));
             stack.push(StackEnum.INT);
         }else
             return false;
         t.removePoint();
         if(!neg&&(stack.top()==StackEnum.INT))
-            functionList.addInstruction("neg.i",toByte(0x34,0,0));
+            functionList.addInstruction("neg.i",(byte)0x34);
         else if(!neg&&(stack.top()==StackEnum.DOUBLE))
-            functionList.addInstruction("neg.f",toByte(0x35,0,0));
+            functionList.addInstruction("neg.f",(byte)0x35);
         else if(!neg)
             throw new Error("stackEnum cannot be negated "+getPos());
         return true;
@@ -518,10 +524,10 @@ public class Analyser {
             }else{
                 expectedParamNum=function.paramSlot;
                 if(function.variableType==VariableType.INT){
-                    functionList.addInstruction("stackalloc "+1,toByte(0x1a,(Integer)1,4));
+                    functionList.addInstruction("stackalloc "+1,toByteInt(0x1a,1));
                     stack.push(StackEnum.INT);
                 }else if(function.variableType==VariableType.DOUBLE){
-                    functionList.addInstruction("stackalloc "+1,toByte(0x1a,(Integer)1,4));
+                    functionList.addInstruction("stackalloc "+1,toByteInt(0x1a,1));
                     stack.push(StackEnum.DOUBLE);
                 }
             }
@@ -550,7 +556,7 @@ public class Analyser {
                     }else
                         throw new Error("type of param ["+function.params.get(i).name+"] of function ["+function.name+"] is not correct "+getPos());
                 }
-                functionList.addInstruction("call "+functionID,toByte(0x48,(Integer) functionID,4));
+                functionList.addInstruction("call "+functionID,toByteInt(0x48,functionID));
             }
         }else{
             t.loadPoint();
@@ -562,9 +568,10 @@ public class Analyser {
         if(t.ifNextToken(TokenType.IDENT)){
             String name=t.getThisToken().getValue().toString();
             Variable variable=pushVariableAddress(name);
-//                if(!variable.isInitialized)
-//                    throw new Error("variable ["+variable.name+"] hasn't been initialized at: row"+Analyser.t.getThisToken().getStartPos().getRow()+" col"+Analyser.t.getThisToken().getStartPos().getCol());
-            functionList.addInstruction("load.64",toByte(0x13,(Integer)0,0));
+            if(!variable.isGlobal)
+                functionList.addInstruction("load.64",(byte)0x13);
+            else
+                functionList.addInstruction("load.32",(byte)0x12);
             stack.pop(StackEnum.ADDR);
             stack.push(variable.variableType);
         }else
@@ -623,35 +630,35 @@ public class Analyser {
         output.flush();
         output.close();
     }
-    private byte[] toByte(int instruction,long num, int length){
-        byte[]bytes=new byte[length+1];
+    private byte[] toByteLong(int instruction,Long num){
+        byte[]bytes=new byte[8+1];
         bytes[0]=(byte)instruction;
-        for(int i=length-1;i>=0;i--){
-            bytes[length-i]=(byte)(num>>(i*8));
+        for(int i=8-1;i>=0;i--){
+            bytes[8-i]=(byte)(num>>(i*8));
         }
         return bytes;
     }
-    private byte[] toByte(int instruction,int num, int length){
-        byte[]bytes=new byte[length+1];
+    private byte[] toByteInt(int instruction,Integer num){
+        byte[]bytes=new byte[4+1];
         bytes[0]=(byte)instruction;
-        for(int i=length-1;i>=0;i--){
-            bytes[length-i]=(byte)(num>>(i*8));
+        for(int i=4-1;i>=0;i--){
+            bytes[4-i]=(byte)(num>>(i*8));
         }
         return bytes;
     }
-    private byte[] toByte(int instruction,double num, int length){
-        return toByte(instruction,Double.doubleToLongBits(num),length);
+    private byte[] toByteDouble(int instruction,double num){
+        return toByteLong(instruction,(Long) Double.doubleToLongBits(num));
     }
     private Variable pushVariableAddress(String name){
         Variable variable=scope.getVariable(name);
         if(variable.isGlobal) {
-            functionList.addInstruction("global "+variable.offset, toByte(0x0c, (Integer)variable.offset, 4));
+            functionList.addInstruction("global "+variable.offset, toByteInt(0x0c,variable.offset));
             stack.push(StackEnum.ADDR);
         }else if(variable.isParam){
-            functionList.addInstruction("arga "+variable.offset, toByte(0x0b, (Integer)variable.offset, 4));
+            functionList.addInstruction("arga "+variable.offset, toByteInt(0x0b,variable.offset));
             stack.push(StackEnum.ADDR);
         }else if(variable.isLocal){
-            functionList.addInstruction("local "+variable.offset, toByte(0x0a, (Integer)variable.offset, 4));
+            functionList.addInstruction("local "+variable.offset, toByteInt(0x0a,variable.offset));
             stack.push(StackEnum.ADDR);
         }
         return variable;
@@ -672,11 +679,11 @@ public class Analyser {
     }
     private void compare(){
         if(stack.top()==stack.preTop()&&stack.preTop()==StackEnum.INT){
-            functionList.addInstruction("cmp.i",toByte(0x30,0,0));
+            functionList.addInstruction("cmp.i",(byte)0x30);
             stack.pop(StackEnum.INT,StackEnum.INT);
             stack.push(StackEnum.BOOL);
         }else if(stack.top()==stack.preTop()&&stack.preTop()==StackEnum.DOUBLE){
-            functionList.addInstruction("cmp.f",toByte(0x32,0,0));
+            functionList.addInstruction("cmp.f",(byte)0x32);
             stack.pop(StackEnum.DOUBLE,StackEnum.DOUBLE);
             stack.push(StackEnum.BOOL);
         }else
@@ -686,41 +693,41 @@ public class Analyser {
         boolean b=br.get(br.size()-1);
         br.remove(br.size()-1);
         if(b)
-            functionList.replaceInstruction(start,"notZero "+num,toByte(0x43,(Integer)num,4));
+            functionList.replaceInstruction(start,"notZero "+num,toByteInt(0x43,num));
         else
-            functionList.replaceInstruction(start,"isZero "+num,toByte(0x42,(Integer)num,4));
+            functionList.replaceInstruction(start,"isZero "+num,toByteInt(0x42,num));
     }
     public void addStdioFunctionInstruction(String name){
         if(name.equals(stdio[0])){
-            functionList.addInstruction("scan.i",toByte(0x50,0,0));
+            functionList.addInstruction("scan.i",(byte)0x50);
             stack.push(StackEnum.INT);
 
         }else if(name.equals(stdio[1])){
-            functionList.addInstruction("scan.c",toByte(0x51,0,0));
+            functionList.addInstruction("scan.c",(byte)0x51);
             stack.push(StackEnum.INT);
 
         }else if(name.equals(stdio[2])){
-            functionList.addInstruction("scan.f",toByte(0x52,0,0));
+            functionList.addInstruction("scan.f",(byte)0x52);
             stack.push(StackEnum.DOUBLE);
 
         }else if(name.equals(stdio[3])){
-            functionList.addInstruction("print.i",toByte(0x54,0,0));
+            functionList.addInstruction("print.i",(byte)0x54);
             stack.pop(StackEnum.INT);
 
         }else if(name.equals(stdio[5])){
-            functionList.addInstruction("print.c",toByte(0x55,0,0));
+            functionList.addInstruction("print.c",(byte)0x55);
             stack.pop(StackEnum.INT);
 
         }else if(name.equals(stdio[4])){
-            functionList.addInstruction("print.f",toByte(0x56,0,0));
+            functionList.addInstruction("print.f",(byte)0x56);
             stack.pop(StackEnum.DOUBLE);
 
         }else if(name.equals(stdio[6])){
-            functionList.addInstruction("print.s",toByte(0x57,0,0));
+            functionList.addInstruction("print.s",(byte)0x57);
             stack.pop(StackEnum.INT);
 
         }else if(name.equals(stdio[7])){
-            functionList.addInstruction("println",toByte(0x58,0,0));
+            functionList.addInstruction("println",(byte)0x58);
         }
     }
     public static String getPos(){
