@@ -76,10 +76,10 @@ public class Analyser {
             pushVariableAddress(name);
             expectNonTerminal("expr",expr(false));
 //            variable.isInitialized=true;
-            if(!variable.isGlobal)
-                functionList.addInstruction("store.64",(byte)0x17);
-            else
-                functionList.addInstruction("store.32",(byte)0x16);
+//            if(!variable.isGlobal)
+            functionList.addInstruction("store.64",(byte)0x17);
+//            else
+//                functionList.addInstruction("store.32",(byte)0x16);
             stack.pop(variableType);
             stack.pop(StackEnum.ADDR);
         }else if(isConst){
@@ -305,10 +305,10 @@ public class Analyser {
 //            isAssigned=true;
             expectNonTerminal("assign_expr",assign_expr(isBool));
 //            isAssigned=false;
-            if(!variable.isGlobal)
-                functionList.addInstruction("store.64", (byte)0x17);
-            else
-                functionList.addInstruction("store.32", (byte)0x16);
+//            if(!variable.isGlobal)
+            functionList.addInstruction("store.64", (byte)0x17);
+//            else
+//                functionList.addInstruction("store.32", (byte)0x16);
             stack.pop(variable.variableType);
         }else{
             t.loadPoint();
@@ -568,10 +568,10 @@ public class Analyser {
         if(t.ifNextToken(TokenType.IDENT)){
             String name=t.getThisToken().getValue().toString();
             Variable variable=pushVariableAddress(name);
-            if(!variable.isGlobal)
-                functionList.addInstruction("load.64",(byte)0x13);
-            else
-                functionList.addInstruction("load.32",(byte)0x12);
+//            if(!variable.isGlobal)
+            functionList.addInstruction("load.64",(byte)0x13);
+//            else
+//                functionList.addInstruction("load.32",(byte)0x12);
             stack.pop(StackEnum.ADDR);
             stack.push(variable.variableType);
         }else
@@ -591,9 +591,9 @@ public class Analyser {
             output.writeByte(variable.isConst?1:0);
             System.out.println("isConst: "+(variable.isConst?1+" ":0+" "));
             if(variable.variableType!=VariableType.STRING){
-                output.writeInt(4);
-                output.writeInt(0);
-                System.out.println("VariableLength: "+4);
+                output.writeInt(8);
+                output.writeLong(0);
+                System.out.println("VariableLength: "+8);
                 System.out.println("VariableValue: "+0);
             }
             else{
