@@ -25,7 +25,7 @@ public class Scope {
         for(int i=variableLists.size()-1;i>=0;i--){
             ArrayList<Variable>variables=variableLists.get(i);
             for(int j=variables.size()-1;j>=0;j--){
-                if(variables.get(j).name.equals(name))
+                if(name.equals(variables.get(j).name))
                     return variables.get(j);
             }
         }

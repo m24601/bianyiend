@@ -703,24 +703,24 @@ public class Analyser {
             stack.push(StackEnum.INT);
 
         }else if(name.equals(stdio[1])){
-            functionList.addInstruction("scan.c",(byte)0x51);
-            stack.push(StackEnum.INT);
-
-        }else if(name.equals(stdio[2])){
             functionList.addInstruction("scan.f",(byte)0x52);
             stack.push(StackEnum.DOUBLE);
+
+        }else if(name.equals(stdio[2])){
+            functionList.addInstruction("scan.c",(byte)0x51);
+            stack.push(StackEnum.INT);
 
         }else if(name.equals(stdio[3])){
             functionList.addInstruction("print.i",(byte)0x54);
             stack.pop(StackEnum.INT);
 
-        }else if(name.equals(stdio[5])){
-            functionList.addInstruction("print.c",(byte)0x55);
-            stack.pop(StackEnum.INT);
-
         }else if(name.equals(stdio[4])){
             functionList.addInstruction("print.f",(byte)0x56);
             stack.pop(StackEnum.DOUBLE);
+
+        }else if(name.equals(stdio[5])){
+            functionList.addInstruction("print.c",(byte)0x55);
+            stack.pop(StackEnum.INT);
 
         }else if(name.equals(stdio[6])){
             functionList.addInstruction("print.s",(byte)0x57);
